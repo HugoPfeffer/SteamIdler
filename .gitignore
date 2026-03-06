@@ -106,3 +106,9 @@ package-lock.json
 
 # Avoid uploading new config files
 config/
+
+.claude/
+.devcontainer/
+openspec/  
+.env*
+.mcp.json
