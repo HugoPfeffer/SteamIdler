@@ -112,3 +112,4 @@ config/
 openspec/  
 .env*
 .mcp.json
+CLAUDE.md
