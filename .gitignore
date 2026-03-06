@@ -106,6 +106,7 @@ package-lock.json
 
 # Avoid uploading new config files
 config/
+k8s/secret-local.yaml
 
 .claude/
 .devcontainer/

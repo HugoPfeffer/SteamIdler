@@ -4,28 +4,41 @@ const { readdirSync } = require('node:fs');
 const { join, resolve } = require('node:path');
 const basePath = resolve(join(__dirname, '../'));
 const Worker = require('../structures/Worker');
+const loadEnvConfig = require('../utils/envConfig');
 const workers = new Map();
 
-const reservedConfigFiles = ['global.js'];
+const reservedConfigFiles = ['global.js', 'envConfig.js'];
 const configPath = join(basePath, '/config');
 
 module.exports = new Promise((resolve, reject) => {
-  // Skip any config filenames that are reserved
-  let configList = readdirSync(configPath).filter(
-    (file) => !reservedConfigFiles.includes(file) && file.endsWith('.js')
-  );
+  // Check environment variable config first
+  const envConfigs = loadEnvConfig();
 
-  // Load our global config if it exists
-  let globalConfig = {};
-  try {
-    globalConfig = require(join(configPath, 'global.js'));
-  } catch (error) {
-    logger.warn('Global config not found, consider creating one to apply global settings');
+  let configList;
+
+  if (envConfigs.length > 0) {
+    configList = envConfigs;
+  } else {
+    // Fall through to file-based config loading
+    const configFiles = readdirSync(configPath).filter(
+      (file) => !reservedConfigFiles.includes(file) && file.endsWith('.js')
+    );
+
+    // Load our global config if it exists
+    let globalConfig = {};
+    try {
+      globalConfig = require(join(configPath, 'global.js'));
+    } catch (error) {
+      logger.warn('Global config not found, consider creating one to apply global settings');
+    }
+
+    configList = configFiles.map((configFile) => ({
+      ...globalConfig,
+      ...require(join(configPath, configFile))
+    }));
   }
 
-  for (const configFile of configList) {
-    // Use our global config as a base and then override it with the account specific config
-    const config = { ...globalConfig, ...require(join(configPath, configFile)) };
+  for (const config of configList) {
     const worker = cluster.fork();
 
     worker.once('online', async () => {

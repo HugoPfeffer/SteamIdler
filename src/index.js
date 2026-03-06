@@ -43,6 +43,19 @@ if (cluster.isPrimary) {
   );
 
   startWorkers();
+
+  let shuttingDown = false;
+  const shutdown = () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log('Received shutdown signal, disconnecting workers...');
+    for (const id in cluster.workers) {
+      cluster.workers[id].disconnect();
+    }
+    setTimeout(() => process.exit(1), 8000).unref();
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 } else {
   require('./sharding/worker')();
 }

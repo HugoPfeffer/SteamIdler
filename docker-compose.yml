@@ -1,0 +1,11 @@
+services:
+  steamidler:
+    build: .
+    env_file: .env
+    volumes:
+      - ./src/config:/app/src/config
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
